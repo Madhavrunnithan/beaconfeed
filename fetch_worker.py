@@ -53,4 +53,4 @@ while True:
         print(e)
 
     # Polling interval
-    time.sleep(60)
+    time.sleep(600)
