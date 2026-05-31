@@ -295,23 +295,38 @@ async def sender_loop(app):
 
                     continue
 
+                topics = {}
+
                 for item in items:
 
-                    text = f"""
-🔔 *BeaconFeed Update*
+                    topic = item["matched_topic"]
 
-📌 *Topic:* {item['matched_topic'].title()}
-📰 *Source:* {item['source']}
-🕒 {item['published']}
+                    if topic not in topics:
 
-{item['title']}
+                        topics[topic] = []
 
-[Read Article]({item['link']})
-"""
+                    topics[topic].append(item)
+
+                for topic, topic_items in topics.items():
+
+                    message = (
+                        f"🔔 *{topic.title()} Updates* "
+                        f"({len(topic_items)})\n\n"
+                    )
+
+                    for article in topic_items:
+
+                        message += (
+                            f"• {article['title']}\n"
+                        )
+
+                    message += (
+                        f"\n🕒 {topic_items[0]['published']}"
+                    )
 
                     await app.bot.send_message(
                         chat_id=int(user_id),
-                        text=text,
+                        text=message,
                         parse_mode="Markdown"
                     )
 

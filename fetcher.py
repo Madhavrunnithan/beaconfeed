@@ -22,6 +22,7 @@ BACKFILL_DAYS = 2
 
 MAX_ITEMS_PER_FEED = 5
 MAX_INITIAL_MESSAGES = 10
+MAX_ITEMS_PER_TOPIC = 3
 
 HEADERS = {
     "User-Agent": "BeaconFeedBot/1.0"
@@ -388,7 +389,6 @@ def filter_for_users(
 
     matched_results = {}
 
-    loop_start_time = datetime.now()
 
     for user_id, user_data in users_data.items():
 
@@ -451,15 +451,48 @@ def filter_for_users(
                     break
 
         # =====================================
-        # SORT LATEST FIRST
+        # LIMIT PER TOPIC
         # =====================================
 
-        matched_results[user_id]["items"].sort(
+        topic_groups = {}
+
+        for item in matched_results[user_id]["items"]:
+
+            topic = item["matched_topic"]
+
+            if topic not in topic_groups:
+
+                topic_groups[topic] = []
+
+            topic_groups[topic].append(item)
+
+        limited_items = []
+
+        for topic, topic_items in topic_groups.items():
+
+            topic_items.sort(
+                key=lambda x:
+                datetime.fromisoformat(
+                    x["published_timestamp"]
+                ),
+                reverse=True
+            )
+
+            limited_items.extend(
+                topic_items[:MAX_ITEMS_PER_TOPIC]
+            )
+
+        # Final overall sort
+        limited_items.sort(
             key=lambda x:
             datetime.fromisoformat(
                 x["published_timestamp"]
             ),
             reverse=True
+        )
+
+        matched_results[user_id]["items"] = (
+            limited_items
         )
 
     return matched_results
